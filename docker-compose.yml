@@ -1,0 +1,39 @@
+version: '3'
+services:
+  postgres-db:
+    image: postgres:10.1
+    ports:
+      - "15436:5432"
+    volumes:
+      - datavol_go:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - postgres-compose-network
+  web:
+    build: .
+    security_opt:
+      - seccomp:unconfined
+    command: ./script/web_entrypoint.sh
+    restart: on-failure
+    volumes:
+      - '.:/go/src/go_api'
+      - '/go/src/go_api/tmp'
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+      - "2345:2345"
+    links:
+      - postgres-db
+    depends_on:
+      - 'postgres-db'
+    networks:
+      - postgres-compose-network
+volumes:
+  datavol_go:
+    external: true
+
+networks:
+  postgres-compose-network:
+    driver: bridge
